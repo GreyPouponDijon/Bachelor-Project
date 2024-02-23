@@ -20,7 +20,7 @@ int setup(void)
 	{	
 		return 0;
 	}
-
+    // Configure port directions
 	gpio_pin_configure_dt(&led0, GPIO_OUTPUT_ACTIVE);
 	gpio_pin_configure_dt(&led1, GPIO_OUTPUT_ACTIVE);
 	gpio_pin_configure_dt(&button0, GPIO_INPUT);
