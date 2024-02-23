@@ -1,4 +1,5 @@
 #include <zephyr/kernel.h>
+#include <zephyr/kernel/drivers>
 
 
 #define CHECK_BIT(var,pos) ((var) & (1<<(pos)))
@@ -38,10 +39,7 @@ int recieve_package(void)
 
 int main(void)
 {
-        setup();
-        while(CHECK_BIT(IN, 8)){
-                blink_led();
-        }
+        
 
         
 }
