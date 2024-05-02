@@ -203,35 +203,56 @@ void Control()
     }
 }
 
-void Link() // github.com/mrombout/gbdk_playground/blob/master/link/link.c
+void Link() // inspirert av github.com/mrombout/gbdk_playground/blob/master/link/link.c
 {
-    printf("A: Send\nB: Receive\n\n");
-	_io_out = 1;
+    printf("Butt stuff?\n\n");
+    uint8_t frameCnt;
+    uint8_t maxFrame = 2;
+    
 	while (1) {
-		if (joypad() == J_A) {
-            _io_out = 0x10; // Set IO out to send uint8_t value (EA)
-			waitpadup();
-			send_byte(); // send _io_out
-			printf("Sending...\n");
-			while (_io_status == IO_SENDING); // Wait for Send
-			if (_io_status == IO_IDLE) // If IO status returns to Idle then success
-				printf("Sent %d\n", (int)_io_out);
-			else
-				printf("Error\n"); // Else print error code
-			_io_out++;
-		}
-		if (joypad() == J_B) {
-			waitpadup();
-			receive_byte(); // receive _io_in
-			printf("Receiving...\n");
-			while (_io_status == IO_RECEIVING); // Wait for Receive
-			if (_io_status == IO_IDLE) // If IO status returns to Idle then success
-				printf("Received %d\n", (int)_io_in);
-			else
-				printf("Error\n"); // Else print error
-		}
+        waitpadup();                        // Wait until no buttons are pressed
+        waitpad(0xff);                      // Wait until any button is pressed (Bitmask 1111 1111 or all buttons)
+        _io_out = joypad();                 // Button pressed is desired output
+        send_byte();                        // Send the value of the pressed button
+        printf("Sending %d\n", (int)_io_out);
+        while(_io_status == IO_SENDING)     // Wait while it's sending
+        {
+            vsync();
+            frameCnt++;
+
+            if (frameCnt >= maxFrame)
+            {
+                frameCnt = 0;
+                break;
+            }
+        }
+
+        receive_byte();
+        while(_io_status == IO_RECEIVING)     // Wait while it's receiving
+        {
+            vsync();
+            frameCnt++;
+
+            if (frameCnt >= maxFrame)
+            {
+                frameCnt = 0;
+                break;
+            }
+        }
+        if (_io_status == IO_IDLE)
+        {
+            printf("Received %d\n", (int)_io_in);
+        }
+        else
+        {
+            printf("RX error %d\n", _io_status);
+            _io_status = IO_IDLE;   // Force idle
+            printf("%d\n", _io_status);
+        } 
 	}
 }
+
+
 
 void main()
 {
@@ -248,18 +269,22 @@ void main()
         if (joypad() & J_LEFT) // if buttontest
         {
             mode = 1;
+            _io_out = 42;
         }
         else if (joypad() & J_UP) // If drawingtest
         {
             mode = 2;
+            _io_out = 69;
         }
         else if (joypad() & J_RIGHT)
         {
             mode = 3;
+            _io_out = 96;
         }
         else if (joypad() & J_DOWN)
         {
             mode = 4;
+            _io_out = 77;
         }
         else if (joypad() & J_START)
         {
@@ -292,4 +317,5 @@ void main()
     }
     
     else{}
+    send_byte();
 }
