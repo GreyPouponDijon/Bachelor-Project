@@ -3,6 +3,7 @@
 #include <gb/drawing.h>
 #include <gb/metasprites.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "Splashscreen.h"
 #include "Rings.h"
@@ -43,7 +44,7 @@ Source: https://gbdk.sourceforge.net/doc/html/c0204.html
 Author: Jesper Reksten
 Co-authors: Fredrik Kihl, Halvor Arnesen
 Version: 1.2
-Last updated: 08.05.24
+Last updated: 13.05.24
 
 
 
@@ -122,8 +123,8 @@ void fadei(uint8_t frames)    // Fade in current image
 #pragma region Animation Stuff
 
 uint8_t animationIndex = 0;
-uint16_t frameCount = 0;    // Both used for a delay-less animation
-const uint16_t framesPerStep = 20;  // Number of frames before changing frame (20 = 3 times per second)
+uint8_t frameCount = 0;    // Both used for a delay-less animation
+uint8_t framesPerStep = 40;  // Number of frames before changing frame (20 = 3 times per second)
 
 #pragma endregion
 
@@ -341,12 +342,14 @@ void updateRings(uint8_t shiftx, uint8_t shifty)
                 move_metasprite_ex(ring8_metasprite, 0, 0, 0, 80+shiftx, 72+shifty);
                 animationIndex = 0;
 
-                if ((-10 < shiftx && shiftx < 10) && (-10 < shifty && shifty < 10)) // Is the ring ish centered?
+                if ((-40 < shiftx && shiftx < 40) && (-40 < shifty && shifty < 40)) // Is the ring ish centered?
                 {
                     score++;
+                    framesPerStep--;    // Speeds up rings
+                } else {
+                    framesPerStep++;
                 }
                 
-
                 break;
 
             default:
@@ -366,122 +369,89 @@ void updateRings(uint8_t shiftx, uint8_t shifty)
 }
 
 
+// ======================================================= NEW TEST AREA ===============================================================================
 
 
 
 
 
+uint8_t scoreX;    // X and y values for postition of score text (46, 113)
+uint8_t scoreY;
 
+uint8_t dig1;   // Digits of the display
+uint8_t dig2;
+uint8_t dig3;
 
+void cockpitDisplays(uint8_t score) {
+    scoreX = 20;  // Initial X position for the score text
+    scoreY = 20;  // Initial Y position for the score text
 
+    dig1 = score / 100;       // Hundreds
+    dig2 = (score / 10) % 10; // Tens
+    dig3 = score % 10;        // Ones
 
-/*
-#pragma region TESTING NEW UPDATE RING
+    uint8_t baseTileIndex = 18;       // Base index where number tiles start in VRAM
+    uint8_t spriteId = 20;            // Starting sprite ID for displaying digits
 
-int8_t velX = 0, velY = 0;
-uint8_t maxVelocity = 5; // Max velocity in either direction
-int8_t friction = 1;     // Friction to slow down the rings
-
-void updateVelocity(uint8_t butt) {
-    if (butt & J_RIGHT) {
-        velX = (velX + 1 < maxVelocity) ? velX + 1 : maxVelocity;
+    // Display hundreds place if it exists
+    if (dig1 != 0) {
+        set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig1]);   // Set the correct tile for the digit
+        move_sprite(spriteId, scoreX, scoreY);                              // Position the digit
+        scoreX += 8;  // Increment X position for the next digit
+        spriteId++;   // Use next sprite ID for the next digit
     }
-    if (butt & J_LEFT) {
-        velX = (velX - 1 > -maxVelocity) ? velX - 1 : -maxVelocity;
-    }
-    if (butt & J_UP) {
-        velY = (velY - 1 > -maxVelocity) ? velY - 1 : -maxVelocity;
-    }
-    if (butt & J_DOWN) {
-        velY = (velY + 1 < maxVelocity) ? velY + 1 : maxVelocity;
+
+    // Display tens place if it exists or if there is a hundreds place
+    if (dig1 != 0 || dig2 != 0) {
+        set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig2]);
+        move_sprite(spriteId, scoreX, scoreY);
+        scoreX += 8;
+        spriteId++;
     }
 
-    // Apply friction to naturally slow down
-    if (velX > 0) velX -= friction;
-    else if (velX < 0) velX += friction;
-
-    if (velY > 0) velY -= friction;
-    else if (velY < 0) velY += friction;
+    // Always display the ones place
+    set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig3]);
+    move_sprite(spriteId, scoreX, scoreY);
 }
 
-void updateRings(uint8_t shiftx, uint8_t shifty, uint8_t butt)
-{
-    updateVelocity(butt); // Update velocity based on button presses
 
-    // Update positions based on velocity
-    shiftx += velX;
-    shifty += velY;
 
-    if (frameCount == framesPerStep)    // If the frame is currently an animation frame
-    {
-        // Simplified switch statement: the same logic with position adjustment
-        switch (animationIndex) {
-            // Assuming each case updates the position of rings similarly
-            case 0:
-                move_metasprite_ex(ring8_metasprite, 0, 0, 0, 200, 200);    // Starts the ring off screen to "remove" the object from frame
-                move_metasprite_ex(ring1_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 1;
-                break;
-            case 1:
-                move_metasprite_ex(ring2_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 2;
-                break;
-            case 2:
-                move_metasprite_ex(ring3_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 3;
-                break;
-            case 3:
-                move_metasprite_ex(ring4_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 4;
-                break;
-            case 4:
-                move_metasprite_ex(ring5_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 5;
-                break;
-            case 5:
-                move_metasprite_ex(ring6_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 6;
-                break;
-            case 6:
-                move_metasprite_ex(ring7_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 7;
-                break;
-            case 7:
-                move_metasprite_ex(ring8_metasprite, 0, 0, 0, 80 + shiftx, 72 + shifty);
-                animationIndex = 0;
-                if ((-10 < shiftx && shiftx < 10) && (-10 < shifty && shifty < 10)) { // Is the ring centered?
-                    score++;
-                }
-                break;
-            default:
-                break;
-        }
-        frameCount = 0;
-    }
 
-    move_metasprite_ex(__current_metasprite, 0, 0, 0, 80 + oldShiftx, 72 + oldShifty);
 
-    oldShiftx = shiftx;
-    oldShifty = shifty;
 
-    frameCount++;  // Advance frame counter
+
+
+
+
+
+// =====================================================================================================================================================
+
+
+
+// Constants for Linear Congruential Generator, a fancy name for a pseudo-random number generator
+#define A 205   // Multiplier
+#define C 57    // Increment
+#define M 256   // Modulus (2**32)
+
+static uint8_t rngState = 1;
+void seedRng(uint8_t seed){
+    rngState = seed ? seed : 1; // Ensure non zero seed
 }
-
-#pragma endregion
-*/
-
-
-
-
-
-
-
-
+uint8_t randRng() {
+    rngState = (A * rngState + C) % M;
+    return rngState;
+}
 
 
 
 void main()
 {
+    uint8_t butt;
+    uint8_t shiftx = 80;
+    uint8_t shifty = 72;
+    uint8_t inc = 2;    // Increment in x and y direction for rings
+    uint8_t lastScore;
+
     set_bkg_data(0, Splashscreen_tileset_size, Splashscreen_tileset);
     set_bkg_tiles(0, 0, 20, 18, Splashscreen_tilemap);
 
@@ -490,10 +460,11 @@ void main()
     DISPLAY_ON;
 
     fadei(10);
-    waitpad(J_START);
+    waitpad(255);
     fadeo(10);
 
     printf("Choose game mode:\n\nSolo:.......A\n\nTwo ship:...B");
+    printf("\n\nFor multiplayer,\nplayer 1 chooses\nTwo Ship and player\ntwo chooses Solo");
     fadei(10);
     waitpad(0x30);  // Wait for J_A or J_B to be pressed
 
@@ -515,40 +486,40 @@ void main()
         break;
     }
 
+    //BGP_REG = 0x1B;
+    //safedelay(10);
+    //BGP_REG = 0xE4;
+
     send_byte();
     while(_io_status == IO_SENDING);
 
+    safedelay(10);
+
     fadeo(10);
-    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"); // Clears the screen a lot simpler than the ClearScreen() function
+    printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"); // Clears the screen a lot simpler and less cpu intensive than the ClearScreen() function
 
     set_win_data(0, Cockpit_tileset_size, Cockpit_tileset);
     set_win_tiles(0, 0, 20, 18, Cockpit_tilemap);
-    fadei(10);
 
     SHOW_WIN;
     SHOW_SPRITES;
     LCDC_REG |= 0x21;   // Enable window and give it priority over sprites
 
     fadei(10);
-
     
 
     set_sprite_data(0, Rings_tileset_size, Rings_tileset);
     set_sprite_data(18, Numbers_tileset_size, Numbers_tileset); // Appends more sprite data along with the rings
-
     
-    uint8_t butt;
-    uint8_t last;
-    uint8_t shiftx;
-    uint8_t shifty;
-    uint8_t inc = 1;    // Increment in x and y direction for rings
 
     while (1)
     {
-        receive_byte();
-        
+        send_byte();
+        while(_io_status == IO_SENDING);
+
         butt = _io_in;
-        //butt = joypad();
+        _io_in = 0x00;
+        butt = joypad();
 
         // Left and right can't be concurrent, moves rings horizontally
         if (butt & J_RIGHT) // &'s are used instead of == as it gives us the option of checking multiple buttons at once
@@ -570,30 +541,55 @@ void main()
             shifty += inc;
         }
         
-        if (joypad() == J_SELECT || score >= 0xFA)   // Send a stop bit and break out of game loop to end game
+        if (joypad() == J_SELECT || score >= 0xFB)   // Send a stop bit and break out of game loop to end game
         {
             _io_out = 0xFF;
             send_byte();
             break;
         }
+
         
+
+
+
 
         updateRings(shiftx, shifty);
         
-        if (playMode == 2)
+
+
+
+
+        if (lastScore != score) // If new score
         {
             _io_out = score;
+            shiftx = randRng() % 80;   // Set random x and y values for next ring
+            shifty = randRng() % 72;
+
+            if (randRng() % 2 == 0)
+            {   // Randomly decide to invert x and/or y
+                shiftx = 160 - shiftx;  // Optionally invert x
+                shifty = 144 - shifty;  // Optionally invert y
+            }
+            
         }
-        
-        send_byte();
+        else
+        {
+            _io_out = 0x69;
+        }
+
+        lastScore = score;
+
+        cockpitDisplays(score-1);
+
+        //printf("%d", butt);
+
+        receive_byte();
         vsync();
     }
 }
 
 /* TO DO FOR NEXT TIME:
 
-Make a display_score function that actually works and displays the correct score where it's supposed to be.
-
-Get the damn velocity thing to work
+PRINT SCORE TEXT CORRECT PLACE
 
 */
