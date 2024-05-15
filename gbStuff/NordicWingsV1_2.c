@@ -15,6 +15,7 @@ uint8_t i;  // Used as a counter in the fade functions
 uint8_t oldShiftx;  // Used to dynamically update rings. Needs to be initialized here to not constantly re-initialize in the function.
 uint8_t oldShifty;
 uint8_t score = 1;
+uint8_t p2score;
 uint8_t playMode;
 
 // OK BROTHER HERE IS WHAT YOU DO (note to self)
@@ -40,11 +41,14 @@ While global variables are bad code practice, they are a lot more efficient in a
 absolute addresses calculated by the compiler every time they are used. Instead, they are statically allocated in RAM which in most cases makes the code more efficient.
 Source: https://gbdk.sourceforge.net/doc/html/c0204.html
 
+Linear Congruential Generator (LCG) is used as a pseudo-randomizer for ring generation. This algorithm is relatively simple, fast and cost efficient to run on the
+gameboy hardware.
+
 
 Author: Jesper Reksten
 Co-authors: Fredrik Kihl, Halvor Arnesen
 Version: 1.2
-Last updated: 13.05.24
+Last updated: 15.05.24
 
 
 
@@ -340,7 +344,6 @@ void updateRings(uint8_t shiftx, uint8_t shifty)
                 break;
             case 7:
                 move_metasprite_ex(ring8_metasprite, 0, 0, 0, 80+shiftx, 72+shifty);
-                animationIndex = 0;
 
                 if ((-40 < shiftx && shiftx < 40) && (-40 < shifty && shifty < 40)) // Is the ring ish centered?
                 {
@@ -349,6 +352,7 @@ void updateRings(uint8_t shiftx, uint8_t shifty)
                 } else {
                     framesPerStep++;
                 }
+                animationIndex = 0;
                 
                 break;
 
@@ -382,21 +386,27 @@ uint8_t dig1;   // Digits of the display
 uint8_t dig2;
 uint8_t dig3;
 
-void cockpitDisplays(uint8_t score) {
-    scoreX = 20;  // Initial X position for the score text
-    scoreY = 20;  // Initial Y position for the score text
+
+
+void cockpitDisplays(uint8_t score, uint8_t posX, uint8_t posY) {
+
+    // These need to be here and not global because if not, the program crashes after score 10. Don't ask why.
+    uint8_t baseTileIndex = 18;
+    uint8_t spriteId = 20;
+
+    scoreX = posX;  // Initial X position for the score text
+    scoreY = posY;  // Initial Y position for the score text
 
     dig1 = score / 100;       // Hundreds
     dig2 = (score / 10) % 10; // Tens
     dig3 = score % 10;        // Ones
 
-    uint8_t baseTileIndex = 18;       // Base index where number tiles start in VRAM
-    uint8_t spriteId = 20;            // Starting sprite ID for displaying digits
 
     // Display hundreds place if it exists
     if (dig1 != 0) {
         set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig1]);   // Set the correct tile for the digit
-        move_sprite(spriteId, scoreX, scoreY);                              // Position the digit
+        set_sprite_prop(spriteId, 0x00);
+        move_sprite(spriteId, scoreX, scoreY);                               // Position the digit
         scoreX += 8;  // Increment X position for the next digit
         spriteId++;   // Use next sprite ID for the next digit
     }
@@ -404,6 +414,7 @@ void cockpitDisplays(uint8_t score) {
     // Display tens place if it exists or if there is a hundreds place
     if (dig1 != 0 || dig2 != 0) {
         set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig2]);
+        set_sprite_prop(spriteId, 0x00);
         move_sprite(spriteId, scoreX, scoreY);
         scoreX += 8;
         spriteId++;
@@ -411,7 +422,25 @@ void cockpitDisplays(uint8_t score) {
 
     // Always display the ones place
     set_sprite_tile(spriteId, baseTileIndex + Numbers_tilemap[dig3]);
+    set_sprite_prop(spriteId, 0x00);
     move_sprite(spriteId, scoreX, scoreY);
+    
+
+
+
+
+
+
+//    // Display "score" text
+//    set_sprite_tile(spriteId, baseTileIndex + 11);
+//    move_sprite(spriteId, 20, 28);
+//    spriteId++;
+//    set_sprite_tile(spriteId, baseTileIndex + 12);
+//    move_sprite(spriteId, 28, 28);
+//    spriteId++;
+//    set_sprite_tile(spriteId, baseTileIndex + 13);
+//    move_sprite(spriteId, 36, 28);
+//    spriteId++;
 }
 
 
@@ -428,12 +457,12 @@ void cockpitDisplays(uint8_t score) {
 
 
 
-// Constants for Linear Congruential Generator, a fancy name for a pseudo-random number generator
+// Constants for Linear Congruential Generator, a fancy name for a pseudo-random number algorithm
 #define A 205   // Multiplier
 #define C 57    // Increment
-#define M 256   // Modulus (2**32)
+#define M 256   // Modulus (2**8)
 
-static uint8_t rngState = 1;
+static uint8_t rngState = 69420;    // Seed
 void seedRng(uint8_t seed){
     rngState = seed ? seed : 1; // Ensure non zero seed
 }
@@ -449,6 +478,8 @@ void main()
     uint8_t butt;
     uint8_t shiftx = 80;
     uint8_t shifty = 72;
+    uint8_t shiftxtmp;
+    uint8_t shiftytmp;
     uint8_t inc = 2;    // Increment in x and y direction for rings
     uint8_t lastScore;
 
@@ -486,9 +517,9 @@ void main()
         break;
     }
 
-    //BGP_REG = 0x1B;
-    //safedelay(10);
-    //BGP_REG = 0xE4;
+    BGP_REG = 0x1B;
+    safedelay(10);
+    BGP_REG = 0xE4;
 
     send_byte();
     while(_io_status == IO_SENDING);
@@ -503,13 +534,14 @@ void main()
 
     SHOW_WIN;
     SHOW_SPRITES;
-    LCDC_REG |= 0x21;   // Enable window and give it priority over sprites
 
     fadei(10);
     
-
     set_sprite_data(0, Rings_tileset_size, Rings_tileset);
     set_sprite_data(18, Numbers_tileset_size, Numbers_tileset); // Appends more sprite data along with the rings
+
+
+    
     
 
     while (1)
@@ -517,9 +549,31 @@ void main()
         send_byte();
         while(_io_status == IO_SENDING);
 
+        if (_io_in == 0x13)
+        {
+            HIDE_WIN;
+            printf("Loser loser, something funny...");
+            break;
+        }
+        if (_io_in == 0x77)
+        {
+            HIDE_WIN;
+            printf("Winner winner, turkey lunch!");
+            break;
+        }
+        if (_io_in == 0x45)
+        {
+            HIDE_WIN;
+            printf("Everyone loses...");
+            break;
+        }
+        
+        
+        
+        
         butt = _io_in;
         _io_in = 0x00;
-        butt = joypad();
+        //butt = joypad();
 
         // Left and right can't be concurrent, moves rings horizontally
         if (butt & J_RIGHT) // &'s are used instead of == as it gives us the option of checking multiple buttons at once
@@ -541,45 +595,48 @@ void main()
             shifty += inc;
         }
         
-        if (joypad() == J_SELECT || score >= 0xFB)   // Send a stop bit and break out of game loop to end game
-        {
-            _io_out = 0xFF;
-            send_byte();
-            break;
-        }
-
-        
-
-
-
 
         updateRings(shiftx, shifty);
-        
-
-
 
 
         if (lastScore != score) // If new score
         {
             _io_out = score;
-            shiftx = randRng() % 80;   // Set random x and y values for next ring
-            shifty = randRng() % 72;
 
-            if (randRng() % 2 == 0)
-            {   // Randomly decide to invert x and/or y
-                shiftx = 160 - shiftx;  // Optionally invert x
-                shifty = 144 - shifty;  // Optionally invert y
+            // Generate random x and y values within the range ±80 and ±72
+            shiftx = (randRng() % 161) - 80;  // Random x between -80 and +80
+            shifty = (randRng() % 145) - 72;  // Random y between -72 and +72
+
+            shiftxtmp = shiftx + 80;    // Tmp values for x and y calculation
+            shiftytmp = shifty + 72;
+
+            // Checks if within boundaries
+            if (shiftxtmp < 20)
+            {
+                shiftxtmp = 20;
+            } else if (shiftxtmp > 140) {
+                shiftxtmp = 140;
             }
-            
+            if (shiftytmp < 20)
+            {
+                shiftytmp = 140;
+            } else if (shiftytmp > 124) {
+                shiftytmp = 124;
+            }
+
+            // Final x and y values
+            shiftx = shiftxtmp - 80;
+            shifty = shiftytmp - 72;
         }
         else
         {
             _io_out = 0x69;
+            
         }
 
         lastScore = score;
 
-        cockpitDisplays(score-1);
+        cockpitDisplays(score-1, 52, 128);
 
         //printf("%d", butt);
 
@@ -587,9 +644,3 @@ void main()
         vsync();
     }
 }
-
-/* TO DO FOR NEXT TIME:
-
-PRINT SCORE TEXT CORRECT PLACE
-
-*/
