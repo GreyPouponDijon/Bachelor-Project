@@ -1,0 +1,51 @@
+Altium Designer Pick and Place Locations
+C:\Users\eisk\OneDrive - Nordic Semiconductor\Documents\Nordic Projects\Student projects\Gameboy\GameBoy Link Cool\production_files\Pick Place for Gameboy Link.csv
+
+========================================================================================================================
+File Design Information:
+
+Date:       06-05-24
+Time:       15:54
+Revision:   Not in VersionControl
+Variant:    No variations
+Units used: mm
+
+"Designator","Comment","Layer","Footprint","Center-X(mm)","Center-Y(mm)","Rotation","Description"
+"P3","Pin Header 2x5, 1.27mm","TopLayer","HDR_2x5-SMD-1.27mm-K","5.4000","6.4000","180","Pin Header 2x5, 1.27mm (50mil), SMD, Keying Shroud"
+"P2","Pin List 1x2","TopLayer","LIST_1x2-NC","5.4250","19.8300","90","Pin List 1x2, 2.54mm (100mil)"
+"U2","BMI270","TopLayer","BMI270","6.9750","12.4125","0","6-axis, smart, low-power, inertial measurement unit"
+"SW1","PB SW","TopLayer","Switch-PB-6.2x6.3mm-SMD","27.9000","11.6000","270","Tactile Switch, SPNO, SMD, 160gf, 6.2x6.3x2.5mm"
+"R2","1k","TopLayer","RESC1005X04L","7.4750","19.8000","90","Resistor, ±1%, 0.063W"
+"P1","Pin List 1x6","TopLayer","LIST_1x6","16.7500","8.3000","180","Pin List 1x6, 2.54mm (100mil)"
+"LD1","L0805G","TopLayer","LED_0805_G","7.5250","23.0750","90","LED, SMD, 0805, GREEN"
+"J1","MM8130-2600","TopLayer","COAXIAL-SWF","29.2000","20.7000","90","Coaxial Connector with Switch"
+"C23","1.2pF","TopLayer","CAPC1005X04L","31.2250","21.5250","90","Capacitor, NP0, ±0.1pF"
+"C22","1.0µF","TopLayer","CAPC1005X04L","7.4000","10.5000","180","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"R1","2R2","TopLayer","RESC0603X03L_C","11.8000","24.2250","0","Resistor, ±1%, 0.05W"
+"X1","32MHz","TopLayer","BT-XTAL_2016","24.5250","23.5544","90","XTAL SMD 2016, 32MHz, Cl=8pF, Tol: ±10ppm, Stab: ±15ppm"
+"L1","2.2nH","TopLayer","INDC0603X03L_C","22.5249","20.6999","180","Inductor, 600mA, ±0.1nH, 120mOhm"
+"C21","N.C.","TopLayer","CAPC0603X03L_C_NC","23.3750","21.2000","270","Not mounted"
+"U1","nRF5340-QKAA","TopLayer","AQFN40P700X700X85_HS-99N","17.4000","19.7000","0","Multi-protocol Bluetooth Low Energy, IEEE 802.15.4, ANT and 2.4GHz proprietary system-on-chip"
+"C12","100nF","TopLayer","CAPC0603X03L_C","19.4500","14.8250","270","Capacitor, X7S, 16V"
+"C13","100nF","TopLayer","CAPC0603X03L_C","22.2000","19.5750","0","Capacitor, X7S, 16V"
+"C9","100nF","TopLayer","CAPC0603X03L_C","11.3250","16.2250","180","Capacitor, X7S, 16V"
+"C18","4.7µF","TopLayer","CAPC1608X06L","13.1000","25.7550","90","Capacitor, X7R, ±10%, 6.3V"
+"L2","10µH","TopLayer","INDC1608X06L","20.3750","25.7750","180","Inductor, 80mA, ±10%"
+"L4","10µH","TopLayer","INDC1608X06L","10.2250","19.7750","270","Inductor, 80mA, ±10%"
+"C16","1.0µF","TopLayer","CAPC1005X04L","14.5500","25.5250","270","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"C5","1.0µF","TopLayer","CAPC1005X04L","17.1500","25.6550","0","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"L3","10µH","TopLayer","INDC1608X06L","16.2500","26.6750","180","Inductor, 80mA, ±10%"
+"C19","2.2µF","TopLayer","CAPC1608X06L","11.4000","19.3750","90","Capacitor, X7R, ±10%"
+"C3","1.0µF","TopLayer","CAPC1005X04L","20.9250","24.7500","0","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"C6","100nF","TopLayer","CAPC0603X03L_C","19.4190","24.0000","0","Capacitor, X7S, 16V"
+"C4","2.2nF","TopLayer","CAPC0603X03L_C","22.6000","22.3500","90","Capacitor, X7R, ±10%, 10V"
+"C8","100nF","TopLayer","CAPC0603X03L_C","12.7000","22.8000","90","Capacitor, X7S, 16V"
+"C7","1.0µF","TopLayer","CAPC1005X04L","16.6000","24.8050","0","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"C2","1.0µF","TopLayer","CAPC1005X04L","18.6750","25.5750","90","Capacitor, Ceramic, 1.0µF 10V X7S 0402,±10%"
+"C17","4.7µF","TopLayer","CAPC1608X06L","11.9750","25.7550","90","Capacitor, X7S, ±10%, 10V"
+"C1","0.7pF","TopLayer","CAPC0603X03L_C","21.7000","21.0000","270","Capacitor, Ceramic, NP0, ±0.1pF, 25V"
+"C20","4.7µF","TopLayer","CAPC1608X06L","11.8000","21.6000","180","Capacitor, X7S, ±10%, 10V"
+"C10","100nF","TopLayer","CAPC0603X03L_C","13.3738","14.8250","270","Capacitor, X7S, 16V"
+"C11","100nF","TopLayer","CAPC0603X03L_C","16.4516","14.8250","270","Capacitor, X7S, 16V"
+"C15","100nF","TopLayer","CAPC0603X03L_C","22.2500","24.1750","0","Capacitor, X7S, 16V"
+"C14","100nF","TopLayer","CAPC0603X03L_C","22.0500","22.3500","270","Capacitor, X7S, 16V"

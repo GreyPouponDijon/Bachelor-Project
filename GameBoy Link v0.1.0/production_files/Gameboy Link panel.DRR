@@ -1,0 +1,18 @@
+----------------------------------------------------------------------------------------------------------------------------------
+NCDrill File Report For: Gameboy Link panel.PcbDoc   2024-05-06  16:05:39
+----------------------------------------------------------------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : Gameboy Link panel.TXT
+EIA File   : Gameboy Link panel.DRL
+
+Tool       Hole Size               Hole Tolerance               Hole Type       Hole Count   Plated         Tool Travel
+----------------------------------------------------------------------------------------------------------------------------------
+T1      10mil (0.249mm)                                           Round             496       PTH        49.66inch (1261.27mm)
+T2      12mil (0.305mm)                                           Round             64        PTH        7.00inch (177.90mm)
+T3      35mil (0.899mm)                                           Round             32        PTH        8.41inch (213.52mm)
+T4      24mil (0.599mm)                                           Round             100       NPTH       23.85inch (605.67mm)
+----------------------------------------------------------------------------------------------------------------------------------
+Totals                                                                              692
+
+Total Processing Time (hh:mm:ss) : 00:00:00
