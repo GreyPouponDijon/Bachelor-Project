@@ -1,0 +1,100 @@
+
+
+
+&pinctrl {
+	spi_master_default: spi_master_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 26)>,
+					<NRF_PSEL(SPIM_MOSI, 0, 27)>,
+					<NRF_PSEL(SPIM_MISO, 0,5)>;
+		};
+	};
+
+	spi_master_sleep: spi_master_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_SCK, 0, 26)>,
+					<NRF_PSEL(SPIM_MOSI, 0, 27)>,
+					<NRF_PSEL(SPIM_MISO, 0,5)>;
+			low-power-enable;
+		};
+	};
+
+	spi_slave_default: spi_slave_default {
+		group1 {
+			psels = <NRF_PSEL(SPIS_SCK, 0, 24)>,
+					<NRF_PSEL(SPIS_MOSI, 1, 8)>,
+					<NRF_PSEL(SPIS_MISO, 0, 5)>,
+					<NRF_PSEL(SPIS_CSN, 1, 9)>;
+		};
+	};
+
+	spi_slave_sleep: spi_slave_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIS_SCK, 0, 24)>,
+					<NRF_PSEL(SPIS_MOSI, 1, 8)>,
+					<NRF_PSEL(SPIS_MISO, 0, 5)>,
+					<NRF_PSEL(SPIS_CSN, 1, 9)>;
+			low-power-enable;
+		};
+	};
+
+	bmi_i2c: bmi_i2c {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 1, 2)>,
+					<NRF_PSEL(TWIM_SCL, 1, 6)>;
+		};
+	};
+
+	bmi_i2c_sleep: bmi_i2c_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 1, 2)>,
+					<NRF_PSEL(TWIM_SCL, 1, 6)>;
+			low-power-enable;
+		};
+	};
+};
+
+&arduino_i2c {
+	status = "okay";
+	pinctrl-0 = <&bmi_i2c>;
+	pinctrl-1 = <&bmi_i2c_sleep>;
+	zephyr,concat-buf-size = <257>;
+	bmi270@68 {
+		compatible = "bosch,bmi270";
+		reg = <0x68>;
+	};
+};
+
+my_spi_master: &spi4 {
+	compatible = "nordic,nrf-spim";
+	status = "okay";
+	pinctrl-0 = <&spi_master_default>;
+	pinctrl-1 = <&spi_master_sleep>;
+	pinctrl-names = "default", "sleep";
+	cs-gpios = <&gpio0 7 GPIO_ACTIVE_LOW>;
+	reg_my_spi_master:  spi-dev-a@0 {
+		reg = <0>;
+	};
+};
+
+my_spi_slave: &spi3 {
+	compatible = "nordic,nrf-spis";
+	status = "okay";
+	pinctrl-0 = <&spi_slave_default>;
+	pinctrl-1 = <&spi_slave_sleep>;
+	pinctrl-names = "default", "sleep";
+	def-char = <0x00>;
+};
+
+led0: &led0 {
+	gpios = <&gpio1 7  GPIO_ACTIVE_LOW>;
+	label = "CS SPI Slave";
+};
+
+qspi: &qspi {
+	status = "disabled";
+};
+
+uart0: &uart0 {
+	status = "okay";
+};
