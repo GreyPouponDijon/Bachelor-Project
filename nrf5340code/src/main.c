@@ -153,7 +153,7 @@ bt_mode_toggle_type bt_mode_toggle;
 K_THREAD_STACK_DEFINE(obtainVal_stack, STANDARD_STACK_SIZE);
 
 struct k_thread obtainVal_id;
-
+//advertising parameters
 static const struct bt_data ad[] = {
         BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
         BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
