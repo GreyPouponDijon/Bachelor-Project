@@ -12,7 +12,12 @@
 #include <math.h>
 #include <stdbool.h>
 #include <nrfx_timer.h>
-
+/*
+This file includes the bluetooth code not included in main.c
+The code is heavily inspiered by Nordic NUS library, nus.c and nus_client.c
+https://github.com/nrfconnect/sdk-nrf/blob/main/subsys/bluetooth/services/nus.c
+https://github.com/nrfconnect/sdk-nrf/blob/main/subsys/bluetooth/services/nus_client.c
+*/
 LOG_MODULE_REGISTER(bt_gb, LOG_LEVEL_INF);
 
 static struct bt_cb gb_cb;
@@ -24,7 +29,7 @@ enum {
 };
 
 
-
+//callback function for received data on central
 static uint8_t on_received(struct bt_conn *conn, struct bt_gatt_subscribe_params *params, const void *data, uint16_t length)
 {
     struct bt_gb_client *gb;
@@ -47,7 +52,7 @@ static uint8_t on_received(struct bt_conn *conn, struct bt_gatt_subscribe_params
 
     return BT_GATT_ITER_CONTINUE;
 }
-
+//
 static void gb_ccc_cfg_changed(const struct bt_gatt_attr *attr, 
                                             uint16_t value)
 {
@@ -57,7 +62,7 @@ static void gb_ccc_cfg_changed(const struct bt_gatt_attr *attr,
 			BT_GB_SEND_STATUS_ENABLED : BT_GB_SEND_STATUS_DISABLED);
     }
 }
-
+//callback function for receive on peripheral
 static ssize_t on_receive(struct bt_conn *conn,
 			  const struct bt_gatt_attr *attr,
 			  const void *buf,
@@ -73,6 +78,7 @@ static ssize_t on_receive(struct bt_conn *conn,
 }
 	return len;
 }
+//callback function for send on peripheral
 static void on_sent(struct bt_conn *conn, void *user_data)
 {
     LOG_DBG("Data send, conn %p", (void *)conn);
@@ -81,7 +87,7 @@ static void on_sent(struct bt_conn *conn, void *user_data)
         gb_cb.sent(conn);
     }
 }
-
+//callback function for write operation for central.
 static void on_write(struct bt_conn *conn, uint8_t err, struct bt_gatt_write_params *params)
 {
     struct bt_gb_client *gb;
@@ -99,6 +105,7 @@ static void on_write(struct bt_conn *conn, uint8_t err, struct bt_gatt_write_par
     }
 }
 
+//Service definition
 BT_GATT_SERVICE_DEFINE(gameboy_service,
 BT_GATT_PRIMARY_SERVICE(BT_UUID_GB_SERVICE),
         BT_GATT_CHARACTERISTIC(BT_UUID_GB_ATTR_TX,
@@ -113,6 +120,7 @@ BT_GATT_PRIMARY_SERVICE(BT_UUID_GB_SERVICE),
                               NULL, on_receive, NULL),
 );
 
+//callback initiation for peripheral
 int bt_gb_init(struct bt_cb *callbacks)
 {
     if(callbacks){
@@ -122,7 +130,7 @@ int bt_gb_init(struct bt_cb *callbacks)
     }
     return 0;
 }
-
+//callback init for central
 int bt_gb_client_init(struct bt_gb_client *gb, const struct bt_gb_client_init_param *gb_init)
 {
     if (!gb || !gb_init) {
@@ -138,6 +146,7 @@ int bt_gb_client_init(struct bt_gb_client *gb, const struct bt_gb_client_init_pa
 	return 0;
 }
 
+//Notify operation function for peripheral
 int bt_gb_send(struct bt_conn *conn, const uint16_t *data, uint16_t len)
 {
     struct bt_gatt_notify_params params = {0};
@@ -158,7 +167,7 @@ int bt_gb_send(struct bt_conn *conn, const uint16_t *data, uint16_t len)
         return -EINVAL;
     }
 }
-
+//Write operation function for central
 int bt_gb_write(struct bt_gb_client *gb, const uint16_t *data, uint16_t len)
 {
     int err;
@@ -177,7 +186,7 @@ int bt_gb_write(struct bt_gb_client *gb, const uint16_t *data, uint16_t len)
     }
     return err;
 }
-
+//Function assinging attributes handles for central, runs during service discovery.
 int bt_gb_handles_assign(struct bt_gatt_dm *dm, struct bt_gb_client *gb)
 {
     const struct bt_gatt_dm_attr *gatt_service_attr = bt_gatt_dm_service_get(dm);
@@ -231,7 +240,7 @@ int bt_gb_handles_assign(struct bt_gatt_dm *dm, struct bt_gb_client *gb)
     gb->conn = bt_gatt_dm_conn_get(dm);
     return 0;
 }
-
+//subsrice to attribute function for central
 int bt_gb_subscribe_receive(struct bt_gb_client *gb)
 {
     LOG_INF("bt_gb_subscribe_receive");
