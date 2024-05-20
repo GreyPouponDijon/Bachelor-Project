@@ -3,7 +3,11 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <bluetooth/gatt_dm.h>
-
+/*
+This code is loosely based on nus.h and nus_client.h
+https://github.com/nrfconnect/sdk-nrf/blob/main/include/bluetooth/services/nus.h
+https://github.com/nrfconnect/sdk-nrf/blob/main/include/bluetooth/services/nus_client.h
+*/
 
 #ifndef BT_SERVICE_H
 #define BT_SERVICE_H
