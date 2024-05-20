@@ -28,7 +28,7 @@ enum bt_gb_send_status {
 };
 
 
-
+//structure used for defining callbacks for peripheral
 struct bt_cb {
     void (*received)(struct bt_conn *conn, const uint16_t *const data, uint16_t len);
     void (*sent)(struct bt_conn *conn);
@@ -36,13 +36,13 @@ struct bt_cb {
 };
 
 struct bt_gb_client;
-
+//structure used for defining callbacks for central
 struct bt_gb_client_cb {
     uint8_t (*received)(struct bt_gb_client *gb, const uint16_t *data, uint16_t len);
     void (*sent)(struct bt_gb_client *gb, uint8_t err, const uint16_t *data, uint16_t len);
     void (*unsubscribed)(struct bt_gb_client *gb);
 };
-
+//strucuture used in handle assign process
 struct bt_gb_client_handles {
 
 	uint16_t rx;
@@ -53,7 +53,7 @@ struct bt_gb_client_handles {
 struct bt_gb_client_init_param {
 	struct bt_gb_client_cb cb;
 };
-
+//structure used in bluetooth central carrying information about attributes on the connected service
 struct bt_gb_client {
     struct bt_conn *conn;
     atomic_t state;
@@ -62,7 +62,7 @@ struct bt_gb_client {
     struct bt_gatt_write_params rx_write_params;
     struct bt_gb_client_cb cb;
 };
-
+//protoypes of functions in service.c
 int bt_gb_init(struct bt_cb *callbacks);
 
 int bt_gb_client_init(struct bt_gb_client *gb, const struct bt_gb_client_init_param *gb_init);
