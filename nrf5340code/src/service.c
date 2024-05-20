@@ -14,7 +14,7 @@
 #include <nrfx_timer.h>
 /*
 This file includes the bluetooth code not included in main.c
-The code is heavily inspiered by Nordic NUS library, nus.c and nus_client.c
+The code is loosely based on Nordic NUS library, nus.c and nus_client.c
 https://github.com/nrfconnect/sdk-nrf/blob/main/subsys/bluetooth/services/nus.c
 https://github.com/nrfconnect/sdk-nrf/blob/main/subsys/bluetooth/services/nus_client.c
 */
