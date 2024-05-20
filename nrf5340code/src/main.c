@@ -170,7 +170,7 @@ bt_mode_toggle_type toggle_mode_type(bt_mode_toggle_type currentType) {
 int start_peripheral(void);
 int start_central(void);
 
-
+//callback function for discovery complete
 static void discovery_complete(struct bt_gatt_dm *dm, void *context)
 {
         struct bt_gb_client *gb = context;
@@ -182,23 +182,23 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context)
         
         bt_gatt_dm_data_release(dm);
 }
-
+//callback function for discovery
 static void discovery_service_not_found(struct bt_conn *conn, void *context)
 {
         LOG_INF("Service not found");
 }
-
+//callback function for discovery
 static void discovery_error(struct bt_conn *conn, int err, void *context)
 {
         LOG_WRN("Error while discovering GATT database: (%d)", err);
 }
-
+//setting callbacks for discovery phase
 struct bt_gatt_dm_cb discovery_cb = {
         .completed = discovery_complete,
         .service_not_found = discovery_service_not_found,
         .error_found = discovery_error,
 };
-
+//starting discovery process
 static void gatt_discover(struct bt_conn *conn)
 {
         int err;
@@ -212,7 +212,7 @@ static void gatt_discover(struct bt_conn *conn)
                 LOG_ERR("Could not start the discovery prodcedure, error (%d)", err);
         }
 }
-
+//exchange MTU with connected device
 static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params)
 {
 	if (!err) {
@@ -221,7 +221,7 @@ static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exch
 		LOG_WRN("MTU exchange failed (err %" PRIu8 ")", err);
 	}
 }
-
+//connection callback
 static void connected(struct bt_conn *conn, uint8_t err)
 {       
         char addr[BT_ADDR_LE_STR_LEN];
@@ -257,7 +257,7 @@ static void connected(struct bt_conn *conn, uint8_t err)
 
         gatt_discover(conn);
 }
-
+//disconnect callback
 static void disconnected(struct bt_conn *conn, uint8_t reason)
 {
         char addr[BT_ADDR_LE_STR_LEN];
@@ -270,7 +270,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
         if(default_conn != conn){
                 return;
         }
-        if (bt_mode_toggle == central){
+	//if the device is in central mode it should start scanning process if disconnected
+        if (bt_mode_toggle == central){ 
                 bt_conn_unref(default_conn);
                 default_conn = NULL;
                 err = bt_scan_start(BT_SCAN_TYPE_SCAN_ACTIVE);
@@ -282,7 +283,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason)
                 current_conn = NULL;
         }      
 }
-
+//callback for filter match
 static void scan_filter_match(struct bt_scan_device_info *device_info, struct bt_scan_filter_match *filter_match, bool connectable)
 {
         char addr[BT_ADDR_LE_STR_LEN];
@@ -290,18 +291,18 @@ static void scan_filter_match(struct bt_scan_device_info *device_info, struct bt
 
         LOG_INF("Filters matched. Address: %s connectable: %d", addr, connectable);
 }
-
+//scanning callback
 static void scan_connecting_error(struct bt_scan_device_info *device_info)
 {
         LOG_WRN("Connecting failed");
 }
-
+//scanning callback
 static void scan_connecting(struct bt_scan_device_info *device_info, struct bt_conn *conn)
 {
         LOG_INF("scan_connecting");
         default_conn = bt_conn_ref(conn);
 }
-
+//scanning callback
 static void filter_no_match(struct bt_scan_device_info *device_info,
 				bool connectable)
 {
@@ -309,7 +310,7 @@ static void filter_no_match(struct bt_scan_device_info *device_info,
         bt_addr_le_to_str(device_info->recv_info->addr, addr, sizeof(addr));
         LOG_INF("Filters not matched. Address: %s", addr);
 }
-
+//callback for data send for central
 static void ble_data_sent(struct bt_gb_client *gb, uint8_t err, const uint16_t *const data, uint16_t len)
 {
         ARG_UNUSED(gb);
@@ -321,7 +322,7 @@ static void ble_data_sent(struct bt_gb_client *gb, uint8_t err, const uint16_t *
                 LOG_INF("Data sent: %u", *data);
         }
 }
-
+//callback for data received for central
 static uint8_t ble_data_received(struct bt_gb_client *gb, const uint16_t *data, uint16_t len)
 {
         ARG_UNUSED(gb);
@@ -331,7 +332,7 @@ static uint8_t ble_data_received(struct bt_gb_client *gb, const uint16_t *data, 
         LOG_INF("Data received %u", *data);
         return BT_GATT_ITER_CONTINUE;
 }
-
+//callback for data received for peripheral
 static void bt_receive_cb(struct bt_conn *conn, const uint16_t *const data, uint16_t len)
 {
     char addr[BT_ADDR_LE_STR_LEN] =  {0};
@@ -341,7 +342,7 @@ static void bt_receive_cb(struct bt_conn *conn, const uint16_t *const data, uint
 
     LOG_INF("Received data: %u, from %s", recived_value, addr);
 };
-
+//bluetooth initialization and callback init for central
 static int bt_client_init(void)
 {
         int err;
@@ -368,7 +369,7 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 	.connected    = connected,
 	.disconnected = disconnected,
 };
-
+//scanning module initialization
 static int scan_init(void)
 {
         int err;
@@ -394,12 +395,12 @@ static int scan_init(void)
         LOG_INF("Scan module initialized");
         return err;
 }
-
+//register callback for peripheral
 static struct bt_cb gb_cb = {
     .received = bt_receive_cb,
 };
 
-
+//function for switching betwwen bluetooth modes
 void mode_toggle()
 {
         switch (bt_mode_toggle)
@@ -444,7 +445,7 @@ void mode_change_recived(uint8_t mode)
         }
         }
 
-
+//initializing bluetooth central 
 int start_central(void)
 {
         int err;
@@ -468,6 +469,7 @@ int start_central(void)
         return 0;
 }
 
+//initialization of bluetooth peripheral
 int start_peripheral(void)
 {
         int err;
@@ -682,7 +684,7 @@ int spi_slave_check_for_message(void)
 
 
 
-
+//change retained regulator registers.
 int change_gpio_voltage(uint32_t target_voltage)
 {
     int err = 0;
@@ -783,7 +785,7 @@ int main(void)
         int err = 0;
         int blink_status = 0;
         int ret;
-
+	//initialize modules
         err = bt_enable(NULL);
         if (err) {
                 LOG_ERR("Failed to enable bluetooth (%d)", err);
