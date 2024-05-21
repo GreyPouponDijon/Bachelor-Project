@@ -205,7 +205,7 @@ void Control()
 
 void Link() // inspirert av github.com/mrombout/gbdk_playground/blob/master/link/link.c
 {
-    printf("Butt stuff?\n\n");
+    printf("Hello there\n\n");
     uint8_t frameCnt;
     uint8_t maxFrame = 2;
     
