@@ -1,3 +1,12 @@
+/*
+* C file for reading and modifying the values from the BMI270
+* Initiates the device, reads gyro and accelormeter, then converts it to one of 9
+* D-pad direction represented by numbers between 0-10
+* Code built upon https://github.com/zephyrproject-rtos/zephyr/tree/main/samples/sensor/bmi270
+*/
+
+
+
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
@@ -53,13 +62,14 @@ const struct device *const dev = DEVICE_DT_GET_ONE(bosch_bmi270);
 struct sensor_value acc[3], gyr[3];
 struct sensor_value full_scale, sampling_freq, oversampling;
 
-
+//standard arduino map
 float map(float x, float in_min, float in_max, float out_min, float out_max)
 {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
 
+//convert area of sixe 4 to single uint_8t
 int SearchArray(float array[]){
         uint8_t pos=0;
         for(int i = 0; i < 4; i++)
@@ -73,7 +83,8 @@ int SearchArray(float array[]){
         return pos;
 }
 
-
+//Converts the phi and theta values calculated to an array representing the
+// 4 D-pad directions on the GB
 int ConvertToNESW(float phi,float theta)
 {
         if (phi > MAX_ANGLE)
@@ -174,7 +185,7 @@ int ConvertToNESW(float phi,float theta)
         return SearchArray(array);
 }
 
-
+//Initiates the BMI270
 int SetSensorParam(void)
 {
 	if (!device_is_ready(dev)) {
@@ -226,6 +237,7 @@ int SetSensorParam(void)
 			&sampling_freq);
 }
 
+/7Reads data fro the BMI270 and converts using a complementary filter
 int ObtainPosition(void)
 {
         sensor_sample_fetch(dev);
@@ -238,7 +250,7 @@ int ObtainPosition(void)
         float ay = (acc[1].val1+acc[1].val2*1e-6);
         float az = (acc[2].val1+acc[2].val2*1e-6);
 
-        //printk("AX: %f; AY: %f; AZ: %f\n", ax, ay, az);
+        //to ensure no Nan's being produced by atanf and asinf
         if(ax <= -9.80)
         {
                 ax = -9.80;
@@ -258,6 +270,7 @@ int ObtainPosition(void)
         float phiHat_acc_g = atanf(ay/az);
         float thetaHat_acc_g = asinf(ax/Gravity_const);
 
+	 //to ensure no Nan's being produced by tanf
         if(thetaHat_acc_g >= Math_Pi/2)
         {
                 thetaHat_acc_g = Math_Pi/2-0.007f;
@@ -268,19 +281,14 @@ int ObtainPosition(void)
                 thetaHat_acc_g = -Math_Pi/2+0.007f;
         }
 
-        //LOG_INF("PhiAcc: %f; ThetaAcc: %f\n", phiHat_acc_g, thetaHat_acc_g);
-
         //Gyroscope values
         float gx = (gyr[0].val1+gyr[0].val2*1e-6);
         float gy = (gyr[1].val1+gyr[1].val2*1e-6);
         float gz = (gyr[2].val1+gyr[2].val2*1e-6);
 
-        //printk("GX: %f; GY: %f; GZ: %f\n", gx, gy, gz);
 
         float phiDot_rps = gx + tanf(thetaHat_acc_g) * (sinf(phiHat_acc_g) * gy + cosf(phiHat_acc_g) * gz);
         float thetaDot_rps = cosf(phiHat_acc_g) * gy - sinf(phiHat_acc_g) * gz;
-
-        //LOG_INF("PhiDot: %f; ThetaDot: %f\n", phiDot_rps, thetaDot_rps);
 
         //Complementary filter
         phiHat = COMP_FILT_ALPHA * phiHat_acc_g + (1.0f - COMP_FILT_ALPHA) * (phiHat + (Sampletime / 1000.0f) * phiDot_rps);
@@ -290,8 +298,6 @@ int ObtainPosition(void)
         {
                 nanFlag = true;
         }
-        //setLedparameters(&Channels,phiHat,thetaHat);
-        //LOG_INF("Value of phiHat: %f; Value of thetaHat: %f\n", phiHat, thetaHat);
         return ConvertToNESW(phiHat,thetaHat);
                            
 }
