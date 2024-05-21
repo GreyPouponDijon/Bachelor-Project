@@ -1,12 +1,3 @@
-/*
-* C file for reading and modifying the values from the BMI270
-* Initiates the device, reads gyro and accelormeter, then converts it to one of 9
-* D-pad direction represented by numbers between 0-10
-* Code built upon https://github.com/zephyrproject-rtos/zephyr/tree/main/samples/sensor/bmi270
-*/
-
-
-
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
@@ -31,6 +22,13 @@
 #include <zephyr/logging/log.h>
 
 #include <zephyr/drivers/spi.h>
+
+/*
+* C file for reading and modifying the values from the BMI270
+* Initiates the device, reads gyro and accelormeter, then converts it to one of 9
+* D-pad direction represented by numbers between 0-10
+* Code built upon https://github.com/zephyrproject-rtos/zephyr/tree/main/samples/sensor/bmi270
+*/
 
 #define LOG_MODULE_NAME BMI270_things
 LOG_MODULE_REGISTER(LOG_MODULE_NAME, LOG_LEVEL_INF);
