@@ -476,8 +476,8 @@ uint8_t randRng() {
 void main()
 {
     uint8_t butt;
-    uint8_t shiftx = 80;
-    uint8_t shifty = 72;
+    uint8_t shiftx = 80;    // Center of screen x axis
+    uint8_t shifty = 72;    // Center of screen y axis
     uint8_t shiftxtmp;
     uint8_t shiftytmp;
     uint8_t inc = 2;    // Increment in x and y direction for rings
@@ -517,9 +517,10 @@ void main()
         break;
     }
 
-    BGP_REG = 0x1B;
+    // This is just a quick visual flash as the color pallettes momentarity invert.
+    BGP_REG = 0x1B;    // Sets color pallette register to inverted
     safedelay(10);
-    BGP_REG = 0xE4;
+    BGP_REG = 0xE4;    // Resets color pallette
 
     send_byte();
     while(_io_status == IO_SENDING);
@@ -549,19 +550,19 @@ void main()
         send_byte();
         while(_io_status == IO_SENDING);
 
-        if (_io_in == 0x13)
+        if (_io_in == 0x13)    // Exit code from nRF5340 telling you you lost
         {
             HIDE_WIN;
             printf("Loser loser, something funny...");
             break;
         }
-        if (_io_in == 0x77)
+        if (_io_in == 0x77)    // You won
         {
             HIDE_WIN;
             printf("Winner winner, turkey lunch!");
             break;
         }
-        if (_io_in == 0x45)
+        if (_io_in == 0x45)    // It's a tie
         {
             HIDE_WIN;
             printf("Everyone loses...");
