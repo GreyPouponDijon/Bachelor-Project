@@ -2,7 +2,7 @@
 #include <gb/gb.h>
 #include <gb/drawing.h>
 
-// OK BITCHBOY HERE IS WHAT YOU DO
+// OK BROTHER HERE IS WHAT YOU DO
 // cd Documents\VSCstuff\Projects\GB\Examples\"02. TestbedRead"
 // .\compile.bat
 
