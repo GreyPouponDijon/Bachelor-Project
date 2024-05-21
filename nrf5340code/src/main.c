@@ -37,6 +37,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+*	This is main file for the nRF5340 part of this project and includes the initialization of Bluetooth and the nrfx timer.
+*	The threads running in this main are the main thread responsible for choosing Bluetooth role and sending messages
+*	The Obtain value thread collecting an procsessing data from the BMI270
+*	And finally the SPI receive thread, reading the SPI slave
+*	For the ISR it handles sending data to the GBP and updating the CS
+*	Code for the BMI270 built upon: https://github.com/zephyrproject-rtos/zephyr/tree/main/samples/sensor/bmi270
+*	Code for the nrfx timer built upon: https://github.com/nrfconnect/sdk-hal_nordic/tree/9784731461018d3e983604698fbbed6af2bea801/nrfx/samples/src/nrfx_timer/timer/
+*	Code for SPI built upon: https://github.com/too1/ncs-spi-master-slave-example
+*/
+
+
 #include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
@@ -114,27 +126,33 @@ static uint8_t slave_tx_buffer[2]={0x00,0x00};
  *  correct timing with communicating with the gameboy*/
 static uint8_t slave_rx_buffer[2]={0x00,0x00};
 
+//Timer variables
+
 /** @brief Counter for timing on spi master send*/
-volatile uint32_t TimerCounter;
+volatile uint32_t timerCounter;
 
 /** @brief Value that shows current position of BMI270.*/
-volatile uint8_t DirectionValue;
+volatile uint8_t directionValue;
+
+/** @brief Value to adjust send rate on the SPI to the Gameboy.*/
+volatile unsigned long msCounter = 0;
+
+//Bluetooth variables
 
 /** @brief Value sent to recipient through bluetooth.*/
 static uint16_t user_value = 0;
 
+/** @brief Value recieved through bluetooth.*/
 volatile uint16_t recived_value = 0;
 
-/** @brief Value to adjust send rate on the SPI to the Gameboy.*/
-volatile unsigned long MSCounter = 0;
+/** @brief Bool to enable sending through bluetooth.*/
+bool sendData = false;
 
-bool reciving = false;
+/** @brief Bool to enable CS.*/
+bool csStatus = false;
 
-
-
-	int ret;
-	bool ledstatus = false;
-	uint32_t counter = 0;
+/** @brief Counter for enabling CS.*/
+uint32_t counter = 0;
 
 
 static struct bt_conn *current_conn;
@@ -428,8 +446,8 @@ void mode_change_recived(uint8_t mode)
 
         }
 
-        if(reciving == true){
-                reciving = false;
+        if(sendData == true){
+                sendData = false;
                 LOG_INF("Sending");
                 if(bt_mode_toggle == peripheral){
                         int err = bt_gb_send(NULL, &user_value, sizeof(user_value));
@@ -483,23 +501,23 @@ int start_peripheral(void)
         return 0;
 }
 
-void GameboyReciveAndSend(int sendData, volatile uint8_t tiltData)
+void GameboyReciveAndSend(int emptyData, volatile uint8_t tiltData)
 {
-        TimerCounter++; 
-        if(TimerCounter > 8)
+        timerCounter++; 
+        if(timerCounter > 8)
         {
-                MSCounter++;
-                if(MSCounter >= tiltValue)
+                msCounter++;
+                if(msCounter >= tiltValue)
                 {
                         spi_write_test_msg(tiltData);
-                        MSCounter = 0;
+                        msCounter = 0;
                 }
 
                 else
                 {
-                        spi_write_test_msg(sendData);
+                        spi_write_test_msg(emptyData);
                 }
-                TimerCounter = 0;
+                timerCounter = 0;
                 slave_rx_buffer[1]--;
         }
 }
@@ -511,11 +529,11 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
     {
         if( slave_rx_buffer[1] == 0xFE)
         {
-               TimerCounter++;
-               if(TimerCounter <= 1)
+               timerCounter++;
+               if(timerCounter <= 1)
                {
-                        spi_write_test_msg(DirectionValue);  
-                        TimerCounter = 0;
+                        spi_write_test_msg(directionValue);  
+                        timerCounter = 0;
                         slave_rx_buffer[1]--;
                         slave_rx_buffer[0]--;
                }
@@ -534,7 +552,7 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
                 }
                 else
                 {
-                        GameboyReciveAndSend(0x00,DirectionValue);
+                        GameboyReciveAndSend(0x00,directionValue);
                 }
                 
         }
@@ -545,9 +563,9 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
            slave_rx_buffer[1] != 0xD2 && slave_rx_buffer[1] != 0xA4 && slave_rx_buffer[1] != 0x4D && 
            slave_rx_buffer[1] != 0x93 && slave_rx_buffer[1] != 0x9A && slave_rx_buffer[1] != 0xAA)
         {
-                reciving = true;
+                sendData = true;
                 user_value = slave_rx_buffer[1];
-                GameboyReciveAndSend(0x00,DirectionValue);
+                GameboyReciveAndSend(0x00,directionValue);
                 slave_rx_buffer[1]=0x00;
         }
         
@@ -556,7 +574,7 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
         {
                 counter = 0;
                 ret =gpio_pin_set_dt(&CS, 0);
-                ledstatus = !ledstatus;
+                csStatus = !csStatus;
                 if (ret < 0) {
                 return 0;
                 }
@@ -564,7 +582,7 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
         else
         {
                 ret = gpio_pin_set_dt(&CS,1);
-                ledstatus = !ledstatus;
+                csStatus = !csStatus;
                 if (ret < 0) {
                         return 0;
                 }	
@@ -576,6 +594,7 @@ static void timer_handler(nrf_timer_event_t event_type, void * p_context)
 
 
 
+//NRFX enable from the source in introduction
 void nrfx_enable(void)
 {
 	nrfx_err_t status;
@@ -609,7 +628,6 @@ void nrfx_enable(void)
                                 NRF_TIMER_SHORT_COMPARE0_CLEAR_MASK, true);
 
     nrfx_timer_enable(&timer_inst);
-    //printk("Timer status: %s", nrfx_timer_is_enabled(&timer_inst) ? "enabled" : "disabled");
 }
 
 // SPI slave functionality
@@ -637,8 +655,8 @@ void spi_slave_init(void)
 	}
 }
 
-
-int spi_slave_write_test_msg(void)
+//Spi trancieve function allowing reading of the data sent from the GB
+int spi_slave_tranceive(void)
 {
 
 
@@ -672,6 +690,8 @@ int spi_slave_write_test_msg(void)
 	return 0;
 }
 
+//Function to check if data has been sent from the data
+//Does not read the data, as this is done by spi_slave_tranceive
 int spi_slave_check_for_message(void)
 {
 	int signaled, result;
@@ -728,6 +748,7 @@ int change_gpio_voltage(uint32_t target_voltage)
 
 //Threads
 
+//Thread for reading the BMI270 attached to the board
 int obtainVal(void)
 {
         LOG_INF("Obtaining value");
@@ -736,19 +757,20 @@ int obtainVal(void)
         while(1)
         {
                 k_sleep(K_MSEC(10));
-                DirectionValue = ObtainPosition();
+                directionValue = ObtainPosition();
                 k_yield();
         }
 }
 
+//Function for starting the obtainVal thread
 void startObtainVal(void)
 {
         k_thread_create(&obtainVal_id, obtainVal_stack, STANDARD_STACK_SIZE, obtainVal, NULL, NULL, NULL, STANDARD_PRIORITY, 0, K_NO_WAIT);
         k_thread_start(&obtainVal_id);
 }
 
-
-int SPICheckForMessage(void)
+//Thread for checking received data from the GBP using SPI, and update the rx_buffer
+int spiCheckForMessage(void)
 {    
         spi_init();
 
@@ -756,14 +778,14 @@ int SPICheckForMessage(void)
 
         LOG_INF("Starting SPI");
 
-        spi_slave_write_test_msg();
+        spi_slave_tranceive();
         while (1)
         {
 
 		if(spi_slave_check_for_message() == 0){
                 // Prepare the next SPI slave transaction
                 LOG_INF("Received: %d", slave_rx_buffer[1]);
-                spi_slave_write_test_msg();
+                spi_slave_tranceive();
 		}
         k_sleep(K_MSEC(10));
         k_yield();
@@ -772,12 +794,13 @@ int SPICheckForMessage(void)
  
 }
 
-K_THREAD_DEFINE(SPICheckForMessage_id, STANDARD_STACK_SIZE, SPICheckForMessage, NULL, NULL, NULL, STANDARD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(spiCheckForMessage_id, STANDARD_STACK_SIZE, spiCheckForMessage, NULL, NULL, NULL, STANDARD_PRIORITY, 0, 0);
 
 
 
 
-
+//main initiates the nrfx timer and obtainVal thread.
+// Controls bluetooth communication
 int main(void)
 {
         startObtainVal();
