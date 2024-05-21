@@ -22,6 +22,12 @@
 
 #include <zephyr/drivers/spi.h>
 
+/*
+* C file initiating and driving the SPI maste on the nRF5340
+* Send data decided in main using tranceive 
+* Code built on: https://github.com/too1/ncs-spi-master-slave-example
+*/
+
 #define LOG_MODULE_NAME SPI_COMS
 LOG_MODULE_REGISTER(LOG_MODULE_NAME, LOG_LEVEL_INF);
 
@@ -33,6 +39,7 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME, LOG_LEVEL_INF);
 const struct device *spi_dev;
 static struct k_poll_signal spi_done_sig = K_POLL_SIGNAL_INITIALIZER(spi_done_sig);
 
+//SPI initiation function
 void spi_init(void)
 {
 	spi_dev = DEVICE_DT_GET(MY_SPI_MASTER);
@@ -52,7 +59,7 @@ static struct spi_config spi_cfg = {
 	.cs = NULL,
 };
 
-
+// Spi write function
 int spi_write_test_msg(uint8_t ValToSend)
 {
 	static uint8_t tx_buffer[1];
